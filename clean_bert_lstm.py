@@ -18,6 +18,7 @@ if USE_CUDA:
 def pretreatment(comments):
     result_comments=[]
     punctuation='。，？！：%&~（）、；“”&|,.?!:%&~();""'
+    print(type(comments))
     for comment in comments:
         comment= ''.join([c for c in comment if c not in punctuation])
         comment= ''.join(comment.split())   #\xa0
@@ -254,8 +255,9 @@ def predict(test_comment_list, config):
 
 if __name__ == '__main__':
     model_config = ModelConfig()
-    data=pd.read_csv('dianping.csv',encoding='utf-8')
-    result_comments = pretreatment(list(data['comment'].values))
+    data=pd.read_csv('online_shopping_10_cats.csv',encoding='utf-8')
+    data = data.dropna()
+    result_comments = pretreatment(list(data['review'].values))
     tokenizer = BertTokenizer.from_pretrained(model_config.bert_path)
 
     result_comments_id = tokenizer(result_comments,
@@ -264,11 +266,11 @@ if __name__ == '__main__':
                                     max_length=200,
                                     return_tensors='pt')
     X = result_comments_id['input_ids']
-    y = torch.from_numpy(data['sentiment'].values).float()
+    y = torch.from_numpy(data['label'].values).float()
 
     X_train,X_test, y_train, y_test = train_test_split( X,
                                                         y,
-                                                        test_size=0.3,
+                                                        test_size=0.2,
                                                         shuffle=True,
                                                         stratify=y,
                                                         random_state=0)
@@ -297,7 +299,7 @@ if __name__ == '__main__':
         print('Run on GPU.')
     else:
         print('No GPU available, run on CPU.')
-    # train_model(model_config, train_loader)
+    train_model(model_config, train_loader)
     test_model(model_config, test_loader)
     test_comments =  ['这个菜真不错']
     predict(test_comments, model_config)
